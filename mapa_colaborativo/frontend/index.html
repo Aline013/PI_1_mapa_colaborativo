@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Mapa Colaborativo</title>
+
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet/dist/leaflet.css"
+    />
+
+    <style>
+        #loginBox {
+
+    position: absolute;
+
+    top: 10px;
+
+    left: 10px;
+
+    z-index: 1000;
+
+    background: white;
+
+    padding: 10px;
+
+    border-radius: 8px;
+}
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loginBox">
+
+    <input
+        type="text"
+        id="email"
+        placeholder="Email"
+    >
+
+    <input
+        type="password"
+        id="senha"
+        placeholder="Senha"
+    >
+
+    <button onclick="login()">
+        Entrar
+    </button>
+
+</div>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+
+    // cria mapa
+    const map = L.map('map').setView([-15, -55], 4);
+
+    L.tileLayer(
+        'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        {
+            attribution: 'OpenStreetMap'
+        }
+    ).addTo(map);
+
+    console.log("mapa carregado");
+
+    map.on('dblclick', function(e) {
+
+    const latitude = e.latlng.lat;
+    const longitude = e.latlng.lng;
+
+    L.popup()
+        .setLatLng(e.latlng)
+        .setContent(`
+
+<div style="width:250px;">
+
+    <h3>Novo ponto</h3>
+
+    <input type="text" id="nome" placeholder="Nome">
+    <br><br>
+
+    <input type="text" id="estado" placeholder="Estado">
+    <br><br>
+
+    <input type="text" id="cidade" placeholder="Cidade">
+    <br><br>
+
+    <input type="number" id="altitude" placeholder="Altitude">
+    <br><br>
+
+    <input type="text" id="lupulo" placeholder="Lúpulo">
+    <br><br>
+
+    <input
+        type="number"
+        step="0.1"
+        id="oleos_essenciais"
+        placeholder="Óleos essenciais"
+    >
+
+    <br><br>
+
+    <input
+        type="number"
+        step="0.1"
+        id="alfa_acidos"
+        placeholder="Alfa ácidos"
+    >
+
+    <br><br>
+
+    <input
+        type="text"
+        id="estilo_cerveja"
+        placeholder="Estilo cerveja"
+    >
+
+    <br><br>
+
+    <input
+        type="number"
+        step="0.1"
+        id="teor_alcoolico"
+        placeholder="Teor alcoólico"
+    >
+
+    <br><br>
+
+    <input
+        type="number"
+        id="ibu"
+        placeholder="IBU"
+    >
+
+    <br><br>
+
+    <input
+        type="number"
+        id="kcal_100ml"
+        placeholder="Kcal/100ml"
+    >
+
+    <br><br>
+
+    <button onclick="salvarPonto(${latitude}, ${longitude})">
+
+        Salvar
+
+    </button>
+    
+</div>
+
+`)
+        .openOn(map);
+
+});
+async function salvarPonto(latitude, longitude) {
+
+    const nome = document.getElementById("nome").value;
+    const cidade = document.getElementById("cidade").value;
+    const estado = document.getElementById("estado").value;
+    const altitude = document.getElementById("altitude").value;
+    const lupulo = document.getElementById("lupulo").value;
+    const oleos_essenciais = document.getElementById("oleos_essenciais").value;
+    const alfa_acidos = document.getElementById("alfa_acidos").value;
+    const estilo_cerveja = document.getElementById("estilo_cerveja").value;
+    const teor_alcoolico = document.getElementById("teor_alcoolico").value;
+    const ibu = document.getElementById("ibu").value;
+    const kcal_100ml = document.getElementById("kcal_100ml").value;
+
+    const dados = {
+
+    nome: nome,
+    estado: estado,
+    cidade: cidade,
+
+    altitude: Number(altitude) || 0,
+    lupulo: lupulo,
+
+    oleos_essenciais: Number(oleos_essenciais) || 0,
+    alfa_acidos: Number(alfa_acidos) || 0,
+
+    estilo_cerveja: estilo_cerveja,
+
+    teor_alcoolico: Number(teor_alcoolico) || 0,
+    ibu: Number(ibu) || 0,
+    kcal_100ml: Number(kcal_100ml) || 0,
+
+    latitude: latitude,
+    longitude: longitude
+};
+
+    const resposta = await fetch(
+        'http://127.0.0.1:8000/pontos',
+        {
+            method: 'POST',
+
+            headers: {
+
+                'Content-Type': 'application/json',
+
+                'Authorization':
+                    `Bearer ${localStorage.getItem("token")}`
+            },
+
+            body: JSON.stringify(dados)
+        }
+    );
+
+    const resultado = await resposta.json();
+
+    console.log(resultado);
+
+    map.closePopup();
+
+    location.reload();
+}
+
+
+    // busca dados da API
+    fetch('http://127.0.0.1:8000/pontos')
+        .then(response => {
+
+            if (!response.ok) {
+
+                throw new Error(
+                "Erro ao buscar pontos"
+                );
+            }
+
+        return response.json();
+        })
+        .then(dados => {
+            console.log(dados);
+            dados.forEach(ponto => {
+                console.log(
+                    ponto.latitude,
+                    ponto.longitude
+                );
+                L.marker([ponto.latitude, ponto.longitude])
+                    .addTo(map)
+                    .bindPopup(`
+
+    <div style="min-width:220px;">
+
+        <h3>${ponto.nome}</h3>
+
+        <b>Estado:</b>
+        ${ponto.estado || "-"}<br>
+
+        <b>Cidade:</b>
+        ${ponto.cidade || "-"}<br>
+
+        <b>Altitude:</b>
+        ${ponto.altitude || "-"}<br>
+
+        <b>Lúpulo:</b>
+        ${ponto.lupulo || "-"}<br>
+
+        <b>Óleos essenciais:</b>
+        ${ponto.oleos_essenciais || "-"}<br>
+
+        <b>Alfa ácidos:</b>
+        ${ponto.alfa_acidos || "-"}<br>
+
+        <b>Estilo cerveja:</b>
+        ${ponto.estilo_cerveja || "-"}<br>
+
+        <b>Teor alcoólico:</b>
+        ${ponto.teor_alcoolico || "-"}<br>
+
+        <b>IBU:</b>
+        ${ponto.ibu || "-"}<br>
+
+        <b>Kcal/100ml:</b>
+        ${ponto.kcal_100ml || "-"}
+
+        <br><br>
+        <button onclick="editarPonto(${ponto.id})">
+
+         Editar
+
+        </button>
+      
+
+        <button onclick="deletarPonto(${ponto.id})">
+
+            Excluir
+
+        </button>
+
+    </div>
+
+`);
+
+            });
+
+        });
+async function deletarPonto(id) {
+
+    const resposta = await fetch(
+
+        `http://127.0.0.1:8000/pontos/${id}`,
+
+        {
+            method: 'DELETE'
+        }
+    );
+
+    const resultado = await resposta.json();
+
+    console.log(resultado);
+
+    location.reload();
+}
+    async function editarPonto(id) {
+
+    const resposta = await fetch(
+        'http://127.0.0.1:8000/pontos'
+    );
+
+    const dados = await resposta.json();
+
+    const ponto = dados.find(
+        p => p.id === id
+    );
+
+    L.popup()
+        .setLatLng([
+            ponto.latitude,
+            ponto.longitude
+        ])
+        .setContent(`
+
+<div style="width:250px;">
+
+    <h3>Editar ponto</h3>
+
+    <input
+        type="text"
+        id="edit_nome"
+        value="${ponto.nome || ""}"
+        placeholder="Nome"
+    >
+
+    <br><br>
+
+    <input
+        type="text"
+        id="edit_estado"
+        value="${ponto.estado || ""}"
+        placeholder="Estado"
+    >
+
+    <br><br>
+
+    <input
+        type="text"
+        id="edit_cidade"
+        value="${ponto.cidade || ""}"
+        placeholder="Cidade"
+    >
+
+    <br><br>
+
+    <input
+        type="number"
+        id="edit_altitude"
+        value="${ponto.altitude || ""}"
+        placeholder="Altitude"
+    >
+
+    <br><br>
+
+    <input
+        type="text"
+        id="edit_lupulo"
+        value="${ponto.lupulo || ""}"
+        placeholder="Lúpulo"
+    >
+
+    <br><br>
+
+    <input
+        type="number"
+        step="0.1"
+        id="edit_oleos_essenciais"
+        value="${ponto.oleos_essenciais || ""}"
+        placeholder="Óleos essenciais"
+    >
+
+    <br><br>
+
+    <input
+        type="number"
+        step="0.1"
+        id="edit_alfa_acidos"
+        value="${ponto.alfa_acidos || ""}"
+        placeholder="Alfa ácidos"
+    >
+
+    <br><br>
+
+    <input
+        type="text"
+        id="edit_estilo_cerveja"
+        value="${ponto.estilo_cerveja || ""}"
+        placeholder="Estilo cerveja"
+    >
+
+    <br><br>
+
+    <input
+        type="number"
+        step="0.1"
+        id="edit_teor_alcoolico"
+        value="${ponto.teor_alcoolico || ""}"
+        placeholder="Teor alcoólico"
+    >
+
+    <br><br>
+
+    <input
+        type="number"
+        id="edit_ibu"
+        value="${ponto.ibu || ""}"
+        placeholder="IBU"
+    >
+
+    <br><br>
+
+    <input
+        type="number"
+        id="edit_kcal_100ml"
+        value="${ponto.kcal_100ml || ""}"
+        placeholder="Kcal/100ml"
+    >
+
+    <br><br>
+
+    <button onclick="atualizarPonto(
+
+        ${ponto.id},
+        ${ponto.latitude},
+        ${ponto.longitude}
+
+    )">
+
+        Atualizar
+
+    </button>
+
+</div>
+
+        `)
+        .openOn(map);
+}
+async function atualizarPonto(id, latitude, longitude) {
+
+    const dados = {
+
+        nome: document.getElementById("edit_nome").value,
+
+        estado: document.getElementById("edit_estado").value,
+
+        cidade: document.getElementById("edit_cidade").value,
+
+        altitude: Number(document.getElementById("edit_altitude").value) || 0,
+
+        lupulo: document.getElementById("edit_lupulo").value,
+
+        oleos_essenciais:
+            Number(document.getElementById("edit_oleos_essenciais").value) || 0,
+
+        alfa_acidos:
+            Number(document.getElementById("edit_alfa_acidos").value) || 0,
+
+        estilo_cerveja:
+            document.getElementById("edit_estilo_cerveja").value,
+
+        teor_alcoolico:
+            Number(document.getElementById("edit_teor_alcoolico").value) || 0,
+
+        ibu:
+            Number(document.getElementById("edit_ibu").value) || 0,
+
+        kcal_100ml:
+            Number(document.getElementById("edit_kcal_100ml").value) || 0,
+
+        latitude: latitude,
+
+        longitude: longitude
+    };
+
+    const resposta = await fetch(
+
+        `http://127.0.0.1:8000/pontos/${id}`,
+
+        {
+
+            method: 'PUT',
+
+            headers: {
+                'Content-Type': 'application/json'
+            },
+
+            body: JSON.stringify(dados)
+        }
+    );
+
+    const resultado = await resposta.json();
+
+    console.log(resultado);
+
+    location.reload();
+}
+async function login() {
+
+    const email =
+        document.getElementById("email").value;
+
+    const senha =
+        document.getElementById("senha").value;
+
+    const formData = new URLSearchParams();
+
+    formData.append("username", email);
+
+    formData.append("password", senha);
+
+    const resposta = await fetch(
+        "http://127.0.0.1:8000/login",
+        {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type":
+                    "application/x-www-form-urlencoded"
+            },
+
+            body: formData
+        }
+    );
+
+    const dados = await resposta.json();
+
+    console.log(dados);
+
+    localStorage.setItem(
+        "token",
+        dados.access_token
+    );
+
+    alert("Login realizado");
+}
+// carrega GeoJSON dos estados
+fetch('camadas/camada_sp.geojson')
+
+    .then(response => response.json())
+
+    .then(estados => {
+
+        L.geoJSON(estados, {
+
+            style: function(feature) {
+
+                return {
+
+                    color: "#333",
+
+                    weight: 1,
+
+                    fillColor: "#4CAF50",
+
+                    fillOpacity: 0.2
+                };
+            },
+
+            onEachFeature: function(feature, layer) {
+
+                // nome do estado
+                const nomeMunicipio =
+                    feature.properties.NM_MUN;
+
+                // popup
+                layer.bindPopup(`
+
+                    <h3>${nomeMunicipio}</h3>
+
+                `);
+
+                // hover
+                layer.on('mouseover', function() {
+
+                    layer.setStyle({
+
+                        fillOpacity: 0.5,
+
+                        weight: 2
+                    });
+
+                });
+
+                // sai do hover
+                layer.on('mouseout', function() {
+
+                    layer.setStyle({
+
+                        fillOpacity: 0.2,
+
+                        weight: 1
+                    });
+
+                });
+
+            }
+
+        }).addTo(map);
+
+    })
+
+    .catch(error => {
+
+        console.log(
+            "Erro ao carregar GeoJSON:",
+            error
+        );
+
+    });
+</script>
+
+</body>
+</html>
