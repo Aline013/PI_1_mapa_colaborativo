@@ -199,7 +199,7 @@ async function salvarPonto(latitude, longitude) {
 };
 
     const resposta = await fetch(
-        'http://127.0.0.1:8000/pontos',
+        'https://pi-1-mapa-colaborativo.onrender.com/pontos',
         {
             method: 'POST',
 
@@ -226,7 +226,7 @@ async function salvarPonto(latitude, longitude) {
 
 
     // busca dados da API
-    fetch('http://127.0.0.1:8000/pontos')
+    fetch('https://pi-1-mapa-colaborativo.onrender.com/pontos')
         .then(response => {
 
             if (!response.ok) {
@@ -308,7 +308,7 @@ async function deletarPonto(id) {
 
     const resposta = await fetch(
 
-        `http://127.0.0.1:8000/pontos/${id}`,
+        `https://pi-1-mapa-colaborativo.onrender.com/pontos/${id}`,
 
         {
             method: 'DELETE'
@@ -324,7 +324,7 @@ async function deletarPonto(id) {
     async function editarPonto(id) {
 
     const resposta = await fetch(
-        'http://127.0.0.1:8000/pontos'
+        'https://pi-1-mapa-colaborativo.onrender.com/pontos'
     );
 
     const dados = await resposta.json();
@@ -502,7 +502,7 @@ async function atualizarPonto(id, latitude, longitude) {
 
     const resposta = await fetch(
 
-        `http://127.0.0.1:8000/pontos/${id}`,
+        `https://pi-1-mapa-colaborativo.onrender.com/pontos/${id}`,
 
         {
 
@@ -537,7 +537,7 @@ async function login() {
     formData.append("password", senha);
 
     const resposta = await fetch(
-        "http://127.0.0.1:8000/login",
+        "https://pi-1-mapa-colaborativo.onrender.com/login",
         {
 
             method: "POST",
