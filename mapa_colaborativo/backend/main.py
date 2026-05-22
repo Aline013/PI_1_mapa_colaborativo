@@ -26,7 +26,15 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from fastapi import HTTPException, status
 
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
 app = FastAPI()
+app.mount(
+    "/static",
+    StaticFiles(directory="../frontend"),
+    name="static"
+)
 
 
 SECRET_KEY = "chave_super_secreta"
@@ -134,6 +142,13 @@ def home():
     return {
         "mensagem": "API do mapa colaborativo funcionando"
     }
+
+@app.get("/")
+def frontend():
+
+    return FileResponse(
+        "../frontend/index.html"
+    )
 
 @app.get("/pontos")
 def listar_pontos(db: Session = Depends(get_db)):
