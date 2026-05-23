@@ -430,3 +430,24 @@ def criar_usuario(
         "perfil": novo_usuario.perfil
 
     }
+
+@app.post("/usuarios-debug")
+def criar_usuario_debug(
+    usuario: UsuarioCreate,
+    db: Session = Depends(get_db)
+):
+    try:
+        novo_usuario = Usuario(
+            nome=usuario.nome,
+            email=usuario.email,
+            cargo=usuario.cargo,
+            senha=gerar_hash_senha(usuario.senha),
+            perfil=usuario.perfil,
+            ativo=True,
+        )
+        db.add(novo_usuario)
+        db.commit()
+        db.refresh(novo_usuario)
+        return {"ok": True, "id": novo_usuario.id}
+    except Exception as e:
+        return {"erro": str(e)}
