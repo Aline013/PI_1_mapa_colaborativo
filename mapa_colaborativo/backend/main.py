@@ -125,7 +125,6 @@ def get_usuario_logado(
 
         raise credenciais_exception
     
-    return token
 def get_db():
 
     db = SessionLocal()
@@ -139,13 +138,6 @@ def get_db():
 def gerar_hash_senha(senha):
 
     return pwd_context.hash(senha)
-
-@app.get("/")
-def home():
-
-    return {
-        "mensagem": "API do mapa colaborativo funcionando"
-    }
 
 @app.get("/")
 def frontend():
@@ -237,6 +229,7 @@ def criar_ponto(
 @app.delete("/pontos/{id}")
 def deletar_ponto(
     id: int,
+    usuario = Depends(get_usuario_logado),
     db: Session = Depends(get_db)
 ):
 
@@ -261,6 +254,7 @@ def deletar_ponto(
 def atualizar_ponto(
     id: int,
     ponto: PontoCreate,
+    usuario = Depends(get_usuario_logado),
     db: Session = Depends(get_db)
 ):
 
@@ -349,12 +343,9 @@ def verificar_senha(
     )
 
 @app.get("/teste-token")
-def teste_token(
-    usuario = Depends(get_usuario_logado)
-):
-    return {
-        "token": token
-    }
+def teste_token(usuario = Depends(get_usuario_logado)):
+    return {"usuario": usuario} 
+    
 @app.post("/login")
 def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
