@@ -30,9 +30,10 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
 app = FastAPI()
-from database import engine
+from database import engine, criar_extensoes
 from models import Base
 
+criar_extensoes() 
 Base.metadata.create_all(bind=engine)
 app.mount(
     "/static",
