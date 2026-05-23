@@ -17,8 +17,6 @@ from geoalchemy2.functions import ST_MakePoint
 from geoalchemy2.functions import ST_SetSRID
 from jose import JWTError, jwt
 
-from passlib.context import CryptContext
-
 from datetime import datetime, timedelta
 
 from fastapi.security import OAuth2PasswordBearer
@@ -28,6 +26,9 @@ from fastapi import HTTPException, status
 
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+import hashlib
+import secrets
+import bcrypt
 
 app = FastAPI()
 from database import engine, criar_extensoes
@@ -47,11 +48,6 @@ SECRET_KEY = "chave_super_secreta"
 ALGORITHM = "HS256"
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
-
-pwd_context = CryptContext(
-    schemes=["bcrypt"],
-    deprecated="auto"
-)
 
 def criar_token(dados: dict):
 
@@ -136,9 +132,10 @@ def get_db():
     finally:
         db.close()
 
-def gerar_hash_senha(senha):
-
-    return pwd_context.hash(senha)
+def gerar_hash_senha(senha: str) -> str:
+    sal = secrets.token_hex(16)
+    hash_ = hashlib.sha256((sal + senha).encode()).hexdigest()
+    return f"{sal}:{hash_}"
 
 @app.get("/")
 def frontend():
@@ -333,15 +330,9 @@ def listar_usuarios(
 
     return resultado
 
-def verificar_senha(
-    senha,
-    hash_senha
-):
-
-    return pwd_context.verify(
-        senha,
-        hash_senha
-    )
+def verificar_senha(senha: str, hash_senha: str) -> bool:
+    sal, hash_ = hash_senha.split(":")
+    return hashlib.sha256((sal + senha).encode()).hexdigest() == hash_
 
 @app.get("/teste-token")
 def teste_token(usuario = Depends(get_usuario_logado)):
