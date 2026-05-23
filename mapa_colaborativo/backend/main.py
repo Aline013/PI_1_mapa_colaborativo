@@ -28,7 +28,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 import hashlib
 import secrets
-import bcrypt
 
 app = FastAPI()
 from database import engine, criar_extensoes
